@@ -37,7 +37,8 @@ public:
 
 private:
 		int Hash     (int fd, PageNum pageNum) const
-			{ return ((fd + pageNum) % numBuckets); }   // Hash function
+		// Kiprey: 需要考虑到 fd == -1 的情况，因为这种情况指代该 Block 为 memory block
+			{ return ((fd + pageNum + numBuckets) % numBuckets); }   // Hash function
 		int numBuckets;                               // Number of hash table buckets
 		PF_HashEntry **hashTable;                     // Hash table
 };

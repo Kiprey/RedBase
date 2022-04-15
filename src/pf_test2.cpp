@@ -217,7 +217,7 @@ RC TestPF()
 #ifdef PF_
 	cout << "Testing flush to disk: ";
 	int *piFP = pStatisticsMgr->Get(PF_FLUSHPAGES);
-	piWP = pStatisticsMgr->Get(PF_WRITEPAGES);
+	piWP = pStatisticsMgr->Get(PF_WRITEPAGE);
 
 	if (piFP && (*piFP != 1)) {
 		cout << "Number of times Flush pages routine has been called " <<
