@@ -1,6 +1,6 @@
 #include "rm.h"
 
-RM_Record::RM_Record () : isValid_(FALSE) {}
+RM_Record::RM_Record () : isValid_(FALSE), pData_(NULL) {}
 
 RM_Record::RM_Record (const RM_Record& r) {
     size_ = r.size_;

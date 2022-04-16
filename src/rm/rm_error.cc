@@ -20,14 +20,20 @@ static char *RM_WarnMsg[] = {
 	(char*) "SlotNum is out of range",
 	(char*) "Record not found",
     (char*) "Record size is mismatch",
-	// (char *)"no more records in scan",
-	// (char *)"scan is not opened",
-	// (char *)"last opened scan is not closed"
+	(char*) "no more records in scan",
+	(char*) "last opened scan is not closed",
+	(char*) "scan is not opened",
 };
 
 static char *RM_ErrorMsg[] = {
 	(char *)"recordSize is too large for current pagefile system",
 	(char *)"recordSize is too small",
+	(char*) "Bad attribute type",
+	(char*) "Bad compare operator",
+	(char*) "Attribute offset is out of range",
+	(char*) "Attribute is incosistent",
+	(char*) "Attribute length is out of range",
+    (char*) "Value is null"
 };
 
 void RM_PrintError(RC rc) {

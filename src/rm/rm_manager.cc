@@ -131,4 +131,5 @@ RC RM_Manager::CloseFile (RM_FileHandle &fileHandle) {
     
     fileHandle.isOpened_ = FALSE;
     fileHandle.modified_ = TRUE;
+    return OK_RC;
 }

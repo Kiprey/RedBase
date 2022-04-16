@@ -66,6 +66,7 @@ struct RM_FileHdr {
 //
 class RM_FileHandle {
 	friend class RM_Manager;
+    friend class RM_FileScan;
 public:
 	RM_FileHandle ();
 	~RM_FileHandle();
@@ -108,6 +109,27 @@ public:
 	              ClientHint pinHint = NO_HINT); // Initialize a file scan
 	RC GetNextRec(RM_Record &rec);               // Get next matching record
 	RC CloseScan ();                             // Close the scan
+private:
+    Boolean isOpened_;
+    const RM_FileHandle* rmFH_;
+    // 下一个待扫描的位置
+    PageNum curPageNum_;
+    SlotNum nextSlotNum_;
+
+    AttrType attrType_;
+    int attrLength_;
+    int attrOffset_;
+    CompOp compOp_;
+    ClientHint pinHint_;
+    union ValueTy{
+        int intNum;
+        float floatNum;
+        char *str;
+    } value_;
+
+    // 从 value 所指向的内存，根据 comOp 转换成某个 Value
+    ValueTy getValueFromPtr(void* value);
+
 };
 
 //
@@ -133,17 +155,26 @@ private:
 //
 void RM_PrintError(RC rc);
 
-#define RM_RID_INVALID          (START_RM_WARN + 0) // RID is not initialized
-#define RM_RECORD_INVALID       (START_RM_WARN + 1) // RM_Record is not initialized
-#define RM_FILE_ALREADY_OPENED  (START_RM_WARN + 2) // File is already opened
-#define RM_FILE_NOT_OPENED      (START_RM_WARN + 3) // File is not opened
-#define RM_INVALID_SLOT         (START_RM_WARN + 4) // slotNum out of range
-#define RM_RECORD_NOT_FOUND     (START_RM_WARN + 5) // Record not found
-#define RM_RECSIZE_MISMATCH     (START_RM_WARN + 6) // Record size is mismatch
-#define RM_LASTWARN             RM_RECSIZE_MISMATCH
+#define RM_RID_INVALID              (START_RM_WARN + 0) // RID is not initialized
+#define RM_RECORD_INVALID           (START_RM_WARN + 1) // RM_Record is not initialized
+#define RM_FILE_ALREADY_OPENED      (START_RM_WARN + 2) // File is already opened
+#define RM_FILE_NOT_OPENED          (START_RM_WARN + 3) // File is not opened
+#define RM_INVALID_SLOT             (START_RM_WARN + 4) // slotNum out of range
+#define RM_RECORD_NOT_FOUND         (START_RM_WARN + 5) // Record not found
+#define RM_RECSIZE_MISMATCH         (START_RM_WARN + 6) // Record size is mismatch
+#define RM_EOF                      (START_RM_WARN + 7) // no more records in scan
+#define RM_SCAN_ALREADY_OPENED      (START_RM_WARN + 8) // last opened scan is not closed
+#define RM_SCAN_NOT_OPENED          (START_RM_WARN + 9) // FileScan is not opened
+#define RM_LASTWARN                 RM_SCAN_NOT_OPENED
 
-#define RM_LARGE_RECORDSIZE     (START_RM_ERR - 0) // record size larger than PF_PAGE_SIZE
-#define RM_SMALL_RECORDSIZE     (START_RM_ERR - 1) // record size is too small
-#define RM_LASTERROR            RM_SMALL_RECORDSIZE
+#define RM_LARGE_RECORDSIZE         (START_RM_ERR - 0) // record size larger than PF_PAGE_SIZE
+#define RM_SMALL_RECORDSIZE         (START_RM_ERR - 1) // record size is too small
+#define RM_BAD_ATTRTYPE             (START_RM_ERR - 2) // Bad attribute type
+#define RM_BAD_COMPOP               (START_RM_ERR - 3) // Bad compare operator
+#define RM_ATTROFFSET_OUT_OF_RANGE  (START_RM_ERR - 4) // Attribute offset is out of range
+#define RM_INCONSISTENT_ATTR        (START_RM_ERR - 5) // Attribute is incosistent
+#define RM_ATTRLENGTH_OUT_OF_RANGE  (START_RM_ERR - 6) // Attribute length is out of range
+#define RM_NULL_VALUE               (START_RM_ERR - 7) // Value is null
+#define RM_LASTERROR            RM_NULL_VALUE
 
 #endif

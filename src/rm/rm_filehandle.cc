@@ -38,6 +38,8 @@ RC RM_FileHandle::GetRec (const RID &rid, RM_Record &rec) const {
         rec.isValid_ = TRUE;
         rec.size_ = fHdr_.recordSize;
         rec.rid_ = rid;
+        if(rec.pData_)
+            delete[] rec.pData_;
         rec.pData_ = new char[rec.size_];
 
         memcpy(rec.pData_, 
@@ -127,6 +129,7 @@ RC RM_FileHandle::InsertRec (const char *pData, RID &rid) {
             pHdr->nextFreePage = RM_PAGE_FULL_USED;
         }
     }
+    return OK_RC;
 }
 
 RC RM_FileHandle::DeleteRec (const RID &rid) {
@@ -220,7 +223,7 @@ RC RM_FileHandle::UpdateRec (const RM_Record &rec) {
     return ret;
 }
 
-RC RM_FileHandle::ForcePages (PageNum pageNum = ALL_PAGES) {
+RC RM_FileHandle::ForcePages (PageNum pageNum) {
     int rc;
     if(!isOpened_)
         return RM_FILE_NOT_OPENED;
@@ -248,6 +251,7 @@ RC RM_FileHandle::ForcePages (PageNum pageNum = ALL_PAGES) {
         return rc;
 
     modified_ = FALSE;
+    return OK_RC;
 }
 
 Boolean RM_FileHandle::IsValidSlotNum(SlotNum slotNum) const {

@@ -27,6 +27,7 @@ typedef int SlotNum;
 //
 class RID {
     friend class RM_FileHandle;
+    friend class RM_FileScan;
 public:
 	RID();                                         // Default constructor
 	RID(PageNum pageNum, SlotNum slotNum);
