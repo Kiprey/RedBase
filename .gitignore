@@ -11,3 +11,6 @@ cmake-build*
 
 # YCM config
 **/*.ycm_extra_conf.py*
+
+# VSCode config
+.vscode/

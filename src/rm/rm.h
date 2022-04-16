@@ -28,12 +28,13 @@
 // RM_Record: RM Record interface
 //
 class RM_Record {
+    friend class RM_FileScan;
 public:
 	RM_Record ();
-	~RM_Record();
+    RM_Record (const RM_Record&);
+    RM_Record& operator= (const RM_Record&);
 
-	void SetData(char *data, size_t size);
-	void UpdateData(char *data, size_t size);
+	~RM_Record();
 
 	// Return the data corresponding to the record.  Sets *pData to the
 	// record contents.
@@ -41,12 +42,29 @@ public:
 
 	// Return the RID associated with the record
 	RC GetRid (RID &rid) const;
+
+private:
+    char *pData_;
+    size_t size_;
+    RID rid_;
+    Boolean isValid_;
+};
+
+// RM_FileHdr: RM File header
+
+struct RM_FileHdr {
+    int recordSize;         // 每一条记录的大小
+    int numRecordsPerPage;  // 每页中可存放的记录数量
+    int numPages;       // 当前文件的总 **存放记录** 的页数(不包括头页)
+
+    int nextFreePage;   // 指向下一个空闲记录的页面索引
 };
 
 //
 // RM_FileHandle: RM File interface
 //
 class RM_FileHandle {
+	friend class RM_Manager;
 public:
 	RM_FileHandle ();
 	~RM_FileHandle();
@@ -62,6 +80,12 @@ public:
 	// Forces a page (along with any contents stored in this class)
 	// from the buffer pool to disk.  Default value forces all pages.
 	RC ForcePages (PageNum pageNum = ALL_PAGES);
+
+private:
+    PF_FileHandle pfFH_;
+    RM_FileHdr fHdr_;
+    Boolean modified_;
+    Boolean isOpened_;
 };
 
 //
@@ -96,6 +120,9 @@ public:
 	RC OpenFile   (const char *fileName, RM_FileHandle &fileHandle);
 
 	RC CloseFile  (RM_FileHandle &fileHandle);
+private:
+
+    PF_Manager & pfMgr_;
 };
 
 //
@@ -103,10 +130,15 @@ public:
 //
 void RM_PrintError(RC rc);
 
-#define RM_SOMEWARN      (START_RM_WARN + 0) // file is not opened
-#define RM_LASTWARN             RM_SOMEWARN
+#define RM_RID_INVALID          (START_RM_WARN + 0) // RID is not initialized
+#define RM_RECORD_INVALID       (START_RM_WARN + 1) // RM_Record is not initialized
+#define RM_FILE_ALREADY_OPENED  (START_RM_WARN + 2) // File is already opened
+#define RM_FILE_NOT_OPENED      (START_RM_WARN + 3) // File is not opened
 
-#define RM_SOMEERR       (START_RM_ERR - 0) // record size larger than PF_PAGE_SIZE
-#define RM_LASTERROR            RM_SOMEERR
+#define RM_LASTWARN             RM_FILE_NOT_OPENED
+
+#define RM_LARGE_RECORDSIZE     (START_RM_ERR - 0) // record size larger than PF_PAGE_SIZE
+#define RM_SMALL_RECORDSIZE     (START_RM_ERR - 1) // record size is too small
+#define RM_LASTERROR            RM_SMALL_RECORDSIZE
 
 #endif
