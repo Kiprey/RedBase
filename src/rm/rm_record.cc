@@ -7,8 +7,10 @@ RM_Record::RM_Record (const RM_Record& r) {
     rid_ = r.rid_;
     isValid_ = r.isValid_;
 
-    char *pData_ = new char[size_];
-    memcpy(pData_, r.pData_, size_);
+    if(isValid_) {
+        char *pData_ = new char[size_];
+        memcpy(pData_, r.pData_, size_);
+    }
 }
 
 RM_Record& RM_Record::operator= (const RM_Record &r)
@@ -18,8 +20,10 @@ RM_Record& RM_Record::operator= (const RM_Record &r)
         rid_ = r.rid_;
         isValid_ = r.isValid_;
 
-        char *pData_ = new char[size_];
-        memcpy(pData_, r.pData_, size_);
+        if(isValid_) {
+            char *pData_ = new char[size_];
+            memcpy(pData_, r.pData_, size_);
+        }
 	}
 
 	return (*this);

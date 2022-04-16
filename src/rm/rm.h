@@ -29,6 +29,7 @@
 //
 class RM_Record {
     friend class RM_FileScan;
+    friend class RM_FileHandle;
 public:
 	RM_Record ();
     RM_Record (const RM_Record&);
@@ -82,6 +83,8 @@ public:
 	RC ForcePages (PageNum pageNum = ALL_PAGES);
 
 private:
+    Boolean IsValidSlotNum(SlotNum) const;
+
     PF_FileHandle pfFH_;
     RM_FileHdr fHdr_;
     Boolean modified_;
@@ -134,8 +137,10 @@ void RM_PrintError(RC rc);
 #define RM_RECORD_INVALID       (START_RM_WARN + 1) // RM_Record is not initialized
 #define RM_FILE_ALREADY_OPENED  (START_RM_WARN + 2) // File is already opened
 #define RM_FILE_NOT_OPENED      (START_RM_WARN + 3) // File is not opened
-
-#define RM_LASTWARN             RM_FILE_NOT_OPENED
+#define RM_INVALID_SLOT         (START_RM_WARN + 4) // slotNum out of range
+#define RM_RECORD_NOT_FOUND     (START_RM_WARN + 5) // Record not found
+#define RM_RECSIZE_MISMATCH     (START_RM_WARN + 6) // Record size is mismatch
+#define RM_LASTWARN             RM_RECSIZE_MISMATCH
 
 #define RM_LARGE_RECORDSIZE     (START_RM_ERR - 0) // record size larger than PF_PAGE_SIZE
 #define RM_SMALL_RECORDSIZE     (START_RM_ERR - 1) // record size is too small
