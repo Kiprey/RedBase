@@ -50,5 +50,5 @@ add_executable(pf_test3 "src/test/pf_test3.cpp" ${PF_SOURCE_FILES})
 
 ################ Record Management Test ################
 
-add_executable(rm_test "src/test/rm_test.cpp" ${RM_SOURCE_FILES})
+add_executable(rm_test "src/test/rm_test.cpp" ${PF_SOURCE_FILES} ${RM_SOURCE_FILES})
 
