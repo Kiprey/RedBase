@@ -31,7 +31,7 @@ RM_Record& RM_Record::operator= (const RM_Record &r)
 
 RM_Record::~RM_Record() {
     if(isValid_) {
-        delete pData_;
+        delete[] pData_;
         isValid_ = FALSE;
     }
 }

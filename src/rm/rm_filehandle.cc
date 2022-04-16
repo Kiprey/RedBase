@@ -117,6 +117,7 @@ RC RM_FileHandle::InsertRec (const char *pData, RID &rid) {
         RM_PageHdr* pHdr = (RM_PageHdr*)data;
         pHdr->nextFreePage = fHdr_.nextFreePage;
         fHdr_.nextFreePage = pageNum;
+        fHdr_.numPages++;
     }
     else {
         // 判断当前页是否写满，以判断是否需要更新 RM_PageHdr
@@ -167,6 +168,12 @@ RC RM_FileHandle::DeleteRec (const RID &rid) {
             pHdr->nextFreePage = fHdr_.nextFreePage;
             fHdr_.nextFreePage = pageNum;
         }
+        /*
+            如果当前页面被删除后已经完全为空了，则可以试着删除该页面
+            不过由于无法在 O(1) 下找到上一个 nextFreePage 为当前页面的页面（最主要的原因）
+            同时 DisposePage 只是将当前页面放置进文件的 free list 中，并非实际释放
+            因此这里就没有删除该页面。
+        */
     }
     else
         ret = RM_RECORD_NOT_FOUND;
@@ -255,5 +262,5 @@ RC RM_FileHandle::ForcePages (PageNum pageNum) {
 }
 
 Boolean RM_FileHandle::IsValidSlotNum(SlotNum slotNum) const {
-    return isOpened_ && (slotNum > 0) && (slotNum < fHdr_.numRecordsPerPage);
+    return isOpened_ && (slotNum >= 0) && (slotNum < fHdr_.numRecordsPerPage);
 }

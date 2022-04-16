@@ -46,8 +46,17 @@ RC RM_FileScan::OpenScan  (const RM_FileHandle &fileHandle,
     // 设置初始时的 PageNum
     int rc;
     PF_PageHandle pfPH;
-    if((rc = rmFH_->pfFH_.GetFirstPage(pfPH)) || (rc = pfPH.GetPageNum(curPageNum_)))
+    // 首先获取 head Page
+    if((rc = rmFH_->pfFH_.GetFirstPage(pfPH)) 
+        || (rc = pfPH.GetPageNum(curPageNum_)) 
+        || (rc = rmFH_->pfFH_.UnpinPage(curPageNum_)))
         return rc;
+    // 接着获取 first data page
+    if((rc = rmFH_->pfFH_.GetNextPage(curPageNum_, pfPH)) 
+        || (rc = pfPH.GetPageNum(curPageNum_)) 
+        || (rc = rmFH_->pfFH_.UnpinPage(curPageNum_)))
+        return rc;
+
     nextSlotNum_ = 0;
 
     attrType_ = attrType;
@@ -62,12 +71,14 @@ RC RM_FileScan::OpenScan  (const RM_FileHandle &fileHandle,
 }
 
 RC RM_FileScan::GetNextRec(RM_Record &rec) {
+    // TODO pinHint_
     if(!isOpened_)
         return RM_SCAN_NOT_OPENED;
 
     int rc;
     char *pData;
     PF_PageHandle pfPH;
+    Boolean isFound = FALSE;
 
     // 如果说当前 slotNum 没问题，则获取当前页面
     if(nextSlotNum_ < rmFH_->fHdr_.numRecordsPerPage) {
@@ -75,7 +86,7 @@ RC RM_FileScan::GetNextRec(RM_Record &rec) {
             return rc;
     }
 
-    for(;;) {
+    while(!isFound) {
         // 如果 next slot 超过了，则获取下一个页面
         if(nextSlotNum_ >= rmFH_->fHdr_.numRecordsPerPage) {
             // 获取下一个页面
@@ -96,12 +107,11 @@ RC RM_FileScan::GetNextRec(RM_Record &rec) {
         char* bitmap = pData + sizeof(RM_PageHdr);
 
         // 在单个页面中进行查找
-        Boolean isFound = FALSE;
         void* recordP = NULL;
         for(/* nop */; !isFound && nextSlotNum_ < rmFH_->fHdr_.numRecordsPerPage; nextSlotNum_++) {
             // 如果存在记录
             if(bitmap[nextSlotNum_ / 8] & (1 << nextSlotNum_ % 8)) {
-                recordP = bitmap + nextSlotNum_ * rmFH_->fHdr_.recordSize;
+                recordP = bitmap + (rmFH_->fHdr_.numRecordsPerPage / 8) + nextSlotNum_ * rmFH_->fHdr_.recordSize;
                 if(compOp_ == NO_OP)
                     isFound = TRUE;
                 else {
@@ -150,10 +160,6 @@ RC RM_FileScan::GetNextRec(RM_Record &rec) {
             }
         }
         
-        // 当前页面查找结束， unpin 当前页面
-        if((rc = rmFH_->pfFH_.UnpinPage(curPageNum_)))
-            return rc;
-        
         // 如果找到了，则 nextSlotNum_ 自增1，为下一次做准备
         if(isFound) {
             // 设置 record
@@ -166,11 +172,13 @@ RC RM_FileScan::GetNextRec(RM_Record &rec) {
 
             rec.rid_.isValid_ = TRUE;
             rec.rid_.pageNum_ = curPageNum_;
-            rec.rid_.slotNum_ = nextSlotNum_;
-
-            nextSlotNum_++;
-            break;
+            // 查找完成后， nextSlotNum_ 会自动加1, 因此这里要减去 1
+            rec.rid_.slotNum_ = nextSlotNum_ - 1;
         }
+
+        // 当前页面查找结束， unpin 当前页面
+        if((rc = rmFH_->pfFH_.UnpinPage(curPageNum_)))
+            return rc;
     }
 
     return OK_RC;

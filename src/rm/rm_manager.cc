@@ -130,6 +130,6 @@ RC RM_Manager::CloseFile (RM_FileHandle &fileHandle) {
         return rc;
     
     fileHandle.isOpened_ = FALSE;
-    fileHandle.modified_ = TRUE;
+    fileHandle.modified_ = FALSE;
     return OK_RC;
 }
