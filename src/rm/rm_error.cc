@@ -23,6 +23,7 @@ static char *RM_WarnMsg[] = {
 	(char*) "no more records in scan",
 	(char*) "last opened scan is not closed",
 	(char*) "scan is not opened",
+    (char*) "Other hint not support",
 };
 
 static char *RM_ErrorMsg[] = {

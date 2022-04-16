@@ -40,6 +40,9 @@ RC RM_FileScan::OpenScan  (const RM_FileHandle &fileHandle,
     // 判断 value
     if(compOp != NO_OP && !value)
         return RM_NULL_VALUE;
+    // 判断 Hint
+    if(pinHint != NO_HINT)
+        return RM_OTHER_HINT_NOT_SUPPORT;
 
     isOpened_ = TRUE;
     rmFH_ = &fileHandle;
@@ -71,7 +74,6 @@ RC RM_FileScan::OpenScan  (const RM_FileHandle &fileHandle,
 }
 
 RC RM_FileScan::GetNextRec(RM_Record &rec) {
-    // TODO pinHint_
     if(!isOpened_)
         return RM_SCAN_NOT_OPENED;
 

@@ -165,7 +165,8 @@ void RM_PrintError(RC rc);
 #define RM_EOF                      (START_RM_WARN + 7) // no more records in scan
 #define RM_SCAN_ALREADY_OPENED      (START_RM_WARN + 8) // last opened scan is not closed
 #define RM_SCAN_NOT_OPENED          (START_RM_WARN + 9) // FileScan is not opened
-#define RM_LASTWARN                 RM_SCAN_NOT_OPENED
+#define RM_OTHER_HINT_NOT_SUPPORT   (START_RM_WARN + 10) // Other hint not support
+#define RM_LASTWARN                 RM_OTHER_HINT_NOT_SUPPORT
 
 #define RM_LARGE_RECORDSIZE         (START_RM_ERR - 0) // record size larger than PF_PAGE_SIZE
 #define RM_SMALL_RECORDSIZE         (START_RM_ERR - 1) // record size is too small
@@ -175,6 +176,6 @@ void RM_PrintError(RC rc);
 #define RM_INCONSISTENT_ATTR        (START_RM_ERR - 5) // Attribute is incosistent
 #define RM_ATTRLENGTH_OUT_OF_RANGE  (START_RM_ERR - 6) // Attribute length is out of range
 #define RM_NULL_VALUE               (START_RM_ERR - 7) // Value is null
-#define RM_LASTERROR            RM_NULL_VALUE
+#define RM_LASTERROR                RM_NULL_VALUE
 
 #endif
