@@ -55,5 +55,5 @@ add_executable(rm_test "src/test/rm_test.cpp" ${PF_SOURCE_FILES} ${RM_SOURCE_FIL
 
 ################ Idexing Test ################
 
-add_executable(rm_test "src/test/ix_test.cpp" ${PF_SOURCE_FILES} ${IX_SOURCE_FILES})
+add_executable(ix_test "src/test/ix_test.cpp" ${PF_SOURCE_FILES} ${IX_SOURCE_FILES})
 
