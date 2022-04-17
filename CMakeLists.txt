@@ -38,6 +38,7 @@ include_directories("src/utils")
 file(GLOB PF_SOURCE_FILES       "src/pf/*" )
 file(GLOB UTILS_SOURCE_FILES    "src/utils/*")
 file(GLOB RM_SOURCE_FILES       "src/rm/*")
+file(GLOB IX_SOURCE_FILES       "src/ix/*")
 
 ################ Page File Test ################
 
@@ -51,4 +52,8 @@ add_executable(pf_test3 "src/test/pf_test3.cpp" ${PF_SOURCE_FILES})
 ################ Record Management Test ################
 
 add_executable(rm_test "src/test/rm_test.cpp" ${PF_SOURCE_FILES} ${RM_SOURCE_FILES})
+
+################ Idexing Test ################
+
+add_executable(rm_test "src/test/ix_test.cpp" ${PF_SOURCE_FILES} ${IX_SOURCE_FILES})
 
