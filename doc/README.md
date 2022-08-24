@@ -101,3 +101,85 @@ Buffer Manger 内部组织页面的方式是，将 PF_BufPageDesc 结构体放�
 
 ### 2.4 pf_filehandle
 
+File Handler 顾名思义是用于处理单个文件的。例如 File handler 可以调用 Buffer Manager 从文件中读取新页面到缓存中，释放对某个页面的引用等。
+
+## 三、 记录管理 Record Management
+
+### 3.0 概述
+
+记录管理组件 Record Management（简称 RM）是用于管理数据条目的，例如数据条目的增删改查。数据条目将被存储在分页文件中的**数据区域**，即下图中那些 **Data Page** 除去 `nextFree` 字段后的区域，每页为 409**2** Byte：
+
+![image-20220611093253333](README/pf-pic.jpg)
+
+为便于说明，在下面我将隐去 Page File 的存在，将 RM 单独抽象出来更好理解。 RM 结构如下所示：
+
+![image-20220611093253333](README/rm-pic.jpg)
+
+> 图话的丑了点，比例缩放有点夸张，将就着看吧......
+
+可以看到 RM 的结构和 PF 结构几乎一致，除了一些细微的差别：
+
+- RM metadata page 中额外多了两个字段：
+  - `recordSize` ：说明单个数据条目的大小
+
+  - `numRecordsPerPage`：说明**单个数据页**可以存放的数据条目个数。
+
+    这个数值的计算公式如下：
+
+    ```cpp
+    // 计算每页中可存放的记录数量
+    // recordSize*x(records) + x/8(bitmap) <= 4088(freePageSize)
+    int records = 8 * (PF_PAGE_SIZE - sizeof(RM_PageHdr)) / (8 * recordSize + 1);
+    // records 向下取8的倍数
+    hdr.numRecordsPerPage = (records / 8) * 8; 
+    ```
+
+    因为不想每次要用到的时候就去计算一下，过于麻烦，于是就在文件创建时提前算好保存，要用到的时候直接取，更为方便。
+  
+- PF 中 `nextFree` 字段指向的是文件中那些**完全没有用到的页面**，即**完全释放**的页面。
+
+  而 RM 中 `nextFreePage` 字段指的是**下一个可存放新 record 的有空闲空间的页面**。换句话说，从 RM 的视角来看，每个数据页都是处于**正在使用**状态，没有 PF 那种完全释放的页面，但新增加的`nextFreePage` 字段可以有效提高数据插入的效率，降低查找空闲记录的索引次数。
+
+- RM 每个数据页中都有一个 **bitmap**，用于记录当前数据页中哪些 record 是已经存放了数据的，哪些是空闲可被覆盖的。
+
+注意 RM 组件单个页面的大小为 409**2** Byte，这个值是 PF 组件**单个数据页的大小（4096Byte）**减去**数据页 metadata 大小（4Byte）**的结果。
+
+### 3.1 rm_rid
+
+先从简单的数据结构开始介绍。RID 结构与 Page Handler 类似，都是保存针对某个实体的索引信息。不同的是， RID 保存的是记录条目的位置，因此会比 Page Handler 多保存一个页内偏移量。
+
+实际上，RID 保存了 **(PageNum, SlotNum)** 这样的键值对，其中 PageNum 描述了**单个文件**中的**数据页编号**，SlotNum 描述了该页中**条目索引偏移**，例如 slotNum = 1 则表示选取的是第 2 个 record。
+
+### 3.2 rm_record
+
+RM_Record 结构体实际保存了一个记录的所有信息，包括：
+
+- `pData_`：实际的记录数据。
+- `size_`：单条记录的数据大小。
+- `rid_`：当前记录的 RID 索引。
+
+### 3.3 rm_manager
+
+RM manager 用于管理整个文件的创建、打开、销毁、关闭等操作，其操作是以**文件**为单位，具体的记录操作等归 RM 组件的其他类来处理。
+
+注意 rm_manager 的操作会涉及到 pf_manager。
+
+### 3.4 rm_filehandle
+
+RM File Handle 用于处理单个文件的记录操作。例如针对某个特定文件的记录**增删改**操作，就需要 RM File Handle 来处理。
+
+每个数据页都存在一个 bitmap，用于指示当前页面中各个记录的状态，例如是空闲还是正在使用。无论是增加新条目还是删除旧条目，都会修改当前条目所在页面的 bitmap 状态。
+
+注意 rm_filehandle 的操作同样会涉及到 pf_filehandle，因为在增删改记录时，需要让 pf_filehandle 创建新页面、加载页面、释放页面等等。
+
+### 3.5 rm_filescan
+
+File scan 是一个用于**扫描记录**的类结构。这个类结构的作用是**线性扫描**文件中**所有满足条件的记录**，并将当前扫描到的记录返回给顶层调用者。
+
+一个记录里可能会有多个属性，例如一个 SQL 表里的每个数据条目都会有多个字段。在使用 file scan 时，用户可能希望从文件中扫描出**满足条件**的记录，因此在创建 file scan 时，用户需要指定用于比较的：
+
+1. 字段类型，例如整型、浮点数还是定长字符串。
+2. 字段大小，通常用于描述字符串的长度，整型大小固定为4字节，浮点数大小固定为8字节。
+3. 字段在记录中的相对偏移量。
+4. 比较运算符，例如大于等于还是小于。
+5. 用于比较的 value。
